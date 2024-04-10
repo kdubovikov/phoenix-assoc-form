@@ -1,0 +1,29 @@
+<.header>
+  Status update <%= @status_update.id %>
+  <:subtitle>This is a status_update record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/status_updates/#{@status_update}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit status_update</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Progress"><%= @status_update.progress %></:item>
+  <:item title="Blockers"><%= @status_update.blockers %></:item>
+  <:item title="Plans"><%= @status_update.plans %></:item>
+  <:item title="Comments"><%= @status_update.comments %></:item>
+</.list>
+
+<.back navigate={~p"/status_updates"}>Back to status_updates</.back>
+
+<.modal :if={@live_action == :edit} id="status_update-modal" show on_cancel={JS.patch(~p"/status_updates/#{@status_update}")}>
+  <.live_component
+    module={ScrumMasterWeb.StatusUpdateLive.FormComponent}
+    id={@status_update.id}
+    title={@page_title}
+    action={@live_action}
+    status_update={@status_update}
+    patch={~p"/status_updates/#{@status_update}"}
+  />
+</.modal>

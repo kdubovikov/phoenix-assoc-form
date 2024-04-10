@@ -82,4 +82,17 @@ defmodule ScrumMasterWeb.Router do
       live "/users/confirm", UserConfirmationInstructionsLive, :new
     end
   end
+
+  scope "/", ScrumMasterWeb do
+    pipe_through [:browser]
+
+    live_session :scrum_updates do
+      live "/status_updates", StatusUpdateLive.Index, :index
+      live "/status_updates/new", StatusUpdateLive.Index, :new
+      live "/status_updates/:id/edit", StatusUpdateLive.Index, :edit
+
+      live "/status_updates/:id", StatusUpdateLive.Show, :show
+      live "/status_updates/:id/show/edit", StatusUpdateLive.Show, :edit
+    end
+  end
 end

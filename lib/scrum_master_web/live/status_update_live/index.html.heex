@@ -1,0 +1,44 @@
+<.header>
+  Listing Status updates
+  <:actions>
+    <.link patch={~p"/status_updates/new"}>
+      <.button>New Status update</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="status_updates"
+  rows={@streams.status_updates}
+  row_click={fn {_id, status_update} -> JS.navigate(~p"/status_updates/#{status_update}") end}
+>
+  <:col :let={{_id, status_update}} label="Progress"><%= status_update.progress %></:col>
+  <:col :let={{_id, status_update}} label="Blockers"><%= status_update.blockers %></:col>
+  <:col :let={{_id, status_update}} label="Plans"><%= status_update.plans %></:col>
+  <:col :let={{_id, status_update}} label="Comments"><%= status_update.comments %></:col>
+  <:action :let={{_id, status_update}}>
+    <div class="sr-only">
+      <.link navigate={~p"/status_updates/#{status_update}"}>Show</.link>
+    </div>
+    <.link patch={~p"/status_updates/#{status_update}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, status_update}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: status_update.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="status_update-modal" show on_cancel={JS.patch(~p"/status_updates")}>
+  <.live_component
+    module={ScrumMasterWeb.StatusUpdateLive.FormComponent}
+    id={@status_update.id || :new}
+    title={@page_title}
+    action={@live_action}
+    status_update={@status_update}
+    patch={~p"/status_updates"}
+  />
+</.modal>
