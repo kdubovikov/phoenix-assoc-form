@@ -86,7 +86,8 @@ defmodule ScrumMasterWeb.Router do
   scope "/", ScrumMasterWeb do
     pipe_through [:browser]
 
-    live_session :scrum_updates do
+    live_session :scrum_updates,
+      on_mount: [{ScrumMasterWeb.UserAuth, :ensure_authenticated}] do
       live "/status_updates", StatusUpdateLive.Index, :index
       live "/status_updates/new", StatusUpdateLive.Index, :new
       live "/status_updates/:id/edit", StatusUpdateLive.Index, :edit

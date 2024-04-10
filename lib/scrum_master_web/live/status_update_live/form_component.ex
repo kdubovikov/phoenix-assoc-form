@@ -19,10 +19,10 @@ defmodule ScrumMasterWeb.StatusUpdateLive.FormComponent do
         phx-change="validate"
         phx-submit="save"
       >
-        <.input field={@form[:progress]} type="text" label="Progress" />
-        <.input field={@form[:blockers]} type="text" label="Blockers" />
-        <.input field={@form[:plans]} type="text" label="Plans" />
-        <.input field={@form[:comments]} type="text" label="Comments" />
+        <.input field={@form[:progress]} type="textarea" label="Progress" />
+        <.input field={@form[:blockers]} type="textarea" label="Blockers" />
+        <.input field={@form[:plans]} type="textarea" label="Plans" />
+        <.input field={@form[:comments]} type="textarea" label="Comments" />
         <:actions>
           <.button phx-disable-with="Saving...">Save Status update</.button>
         </:actions>
@@ -71,7 +71,7 @@ defmodule ScrumMasterWeb.StatusUpdateLive.FormComponent do
   end
 
   defp save_status_update(socket, :new, status_update_params) do
-    case StatusUpdates.create_status_update(status_update_params) do
+    case StatusUpdates.create_status_update(status_update_params, socket.assigns.user_id) do
       {:ok, status_update} ->
         notify_parent({:saved, status_update})
 

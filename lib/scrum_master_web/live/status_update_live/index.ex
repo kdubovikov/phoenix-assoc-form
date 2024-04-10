@@ -21,9 +21,13 @@ defmodule ScrumMasterWeb.StatusUpdateLive.Index do
   end
 
   defp apply_action(socket, :new, _params) do
+    # get current user from session
+    user = socket.assigns.current_user
+    status_update = %StatusUpdate{user_id: user.id}
+
     socket
     |> assign(:page_title, "New Status update")
-    |> assign(:status_update, %StatusUpdate{})
+    |> assign(:status_update, status_update)
   end
 
   defp apply_action(socket, :index, _params) do
@@ -33,7 +37,10 @@ defmodule ScrumMasterWeb.StatusUpdateLive.Index do
   end
 
   @impl true
-  def handle_info({ScrumMasterWeb.StatusUpdateLive.FormComponent, {:saved, status_update}}, socket) do
+  def handle_info(
+        {ScrumMasterWeb.StatusUpdateLive.FormComponent, {:saved, status_update}},
+        socket
+      ) do
     {:noreply, stream_insert(socket, :status_updates, status_update)}
   end
 

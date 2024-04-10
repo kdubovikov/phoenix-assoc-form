@@ -18,9 +18,13 @@ defmodule ScrumMaster.StatusUpdates do
 
   """
   def list_status_updates do
-    Repo.all(StatusUpdate)
+    StatusUpdate
+    |> Repo.all()
+    |> Repo.preload(:user)
   end
 
+  @spec get_status_update!(any()) ::
+          nil | [%{optional(atom()) => any()}] | %{optional(atom()) => any()}
   @doc """
   Gets a single status_update.
 
@@ -35,7 +39,11 @@ defmodule ScrumMaster.StatusUpdates do
       ** (Ecto.NoResultsError)
 
   """
-  def get_status_update!(id), do: Repo.get!(StatusUpdate, id)
+  def get_status_update!(id) do
+    StatusUpdate
+    |> Repo.get!(id)
+    |> Repo.preload(:user)
+  end
 
   @doc """
   Creates a status_update.
@@ -49,10 +57,20 @@ defmodule ScrumMaster.StatusUpdates do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_status_update(attrs \\ %{}) do
+  def create_status_update(attrs \\ %{}, user_id) do
     %StatusUpdate{}
     |> StatusUpdate.changeset(attrs)
+    |> Ecto.Changeset.put_change(:user_id, user_id)
     |> Repo.insert()
+    |> case do
+      {:ok, status_update} ->
+        status_update
+        |> Repo.preload(:user)
+        |> (&{:ok, &1}).()
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   @doc """

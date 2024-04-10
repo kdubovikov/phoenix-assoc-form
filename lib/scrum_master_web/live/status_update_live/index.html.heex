@@ -12,10 +12,18 @@
   rows={@streams.status_updates}
   row_click={fn {_id, status_update} -> JS.navigate(~p"/status_updates/#{status_update}") end}
 >
+  <:col :let={{_id, status_update}} label="By">
+    <%= if status_update.user do %>
+      <%= status_update.user.email %>
+    <% else %>
+      -
+    <% end %>
+  </:col>
   <:col :let={{_id, status_update}} label="Progress"><%= status_update.progress %></:col>
   <:col :let={{_id, status_update}} label="Blockers"><%= status_update.blockers %></:col>
   <:col :let={{_id, status_update}} label="Plans"><%= status_update.plans %></:col>
   <:col :let={{_id, status_update}} label="Comments"><%= status_update.comments %></:col>
+  <:col :let={{_id, status_update}} label="Created at"><%= status_update.inserted_at %></:col>
   <:action :let={{_id, status_update}}>
     <div class="sr-only">
       <.link navigate={~p"/status_updates/#{status_update}"}>Show</.link>
@@ -32,7 +40,12 @@
   </:action>
 </.table>
 
-<.modal :if={@live_action in [:new, :edit]} id="status_update-modal" show on_cancel={JS.patch(~p"/status_updates")}>
+<.modal
+  :if={@live_action in [:new, :edit]}
+  id="status_update-modal"
+  show
+  on_cancel={JS.patch(~p"/status_updates")}
+>
   <.live_component
     module={ScrumMasterWeb.StatusUpdateLive.FormComponent}
     id={@status_update.id || :new}
@@ -40,5 +53,6 @@
     action={@live_action}
     status_update={@status_update}
     patch={~p"/status_updates"}
+    user_id={@current_user.id}
   />
 </.modal>
