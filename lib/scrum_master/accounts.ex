@@ -11,6 +11,20 @@ defmodule ScrumMaster.Accounts do
   ## Database getters
 
   @doc """
+  Returns the list of users.
+
+  ## Examples
+
+      iex> list_users()
+      [%User{}, ...]
+
+  """
+  def list_users do
+    User
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a user by email.
 
   ## Examples

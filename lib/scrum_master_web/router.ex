@@ -95,5 +95,15 @@ defmodule ScrumMasterWeb.Router do
       live "/status_updates/:id", StatusUpdateLive.Show, :show
       live "/status_updates/:id/show/edit", StatusUpdateLive.Show, :edit
     end
+
+    live_session :teams,
+      on_mount: [{ScrumMasterWeb.UserAuth, :ensure_authenticated}] do
+      live "/teams", TeamLive.Index, :index
+      live "/teams/new", TeamLive.Index, :new
+      live "/teams/:id/edit", TeamLive.Index, :edit
+
+      live "/teams/:id", TeamLive.Show, :show
+      live "/teams/:id/show/edit", TeamLive.Show, :edit
+    end
   end
 end

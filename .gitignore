@@ -39,3 +39,4 @@ npm-debug.log
 *.db
 *.db-*
 
+test/scrum_master_web/.DS_Store
