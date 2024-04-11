@@ -2,6 +2,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
   use ScrumMasterWeb, :live_component
 
   alias ScrumMaster.Teams
+  alias ScrumMaster.Accounts
 
   @impl true
   def render(assigns) do
@@ -20,6 +21,17 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
         phx-submit="save"
       >
         <.input field={@form[:name]} type="text" label="Name" />
+        <.live_component
+          module={ScrumMasterWeb.AutocompleteSearchComponent}
+          id="team-lead-search"
+          show={true}
+          on_cancel={JS.hide(to: "#team-lead-search")}
+          document={[]}
+          search_fun={:search_users_by_email}
+          context={Accounts}
+          query=""
+          results={@team_lead_results}
+        />
         <:actions>
           <.button phx-disable-with="Saving...">Save Team</.button>
         </:actions>
@@ -35,6 +47,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
     {:ok,
      socket
      |> assign(assigns)
+     |> assign(:team_lead_results, [])
      |> assign_form(changeset)}
   end
 

@@ -25,6 +25,20 @@ defmodule ScrumMaster.Accounts do
   end
 
   @doc """
+  Search users by email.
+
+  ## Examples
+
+      iex> search_users_by_email("foo@example.com")
+      [%User{}, ...]
+  """
+  def search_users_by_email(email) do
+    User
+    |> where([u], like(u.email, ^"%#{email}%"))
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a user by email.
 
   ## Examples
