@@ -72,6 +72,15 @@ defmodule ScrumMaster.Accounts do
     if User.valid_password?(user, password), do: user
   end
 
+  def get_users_by_ids(nil), do: []
+  def get_users_by_ids([]), do: []
+
+  def get_users_by_ids(ids) do
+    User
+    |> where([u], u.id in ^ids)
+    |> Repo.all()
+  end
+
   @doc """
   Gets a single user.
 

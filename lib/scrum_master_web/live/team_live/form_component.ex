@@ -3,6 +3,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
 
   alias ScrumMaster.Teams
   alias ScrumMaster.Accounts
+  import Ecto.Changeset
 
   @impl true
   def render(assigns) do
@@ -23,14 +24,28 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
         <.input field={@form[:name]} type="text" label="Name" />
         <.live_component
           module={ScrumMasterWeb.AutocompleteSearchComponent}
+          field={@form[:leaders]}
           id="team-lead-search"
+          label="Team Lead"
           show={true}
           on_cancel={JS.hide(to: "#team-lead-search")}
-          document={[]}
           search_fun={:search_users_by_email}
           context={Accounts}
-          query=""
-          results={@team_lead_results}
+          results={[]}
+          selected={[]}
+        />
+
+        <.live_component
+          module={ScrumMasterWeb.AutocompleteSearchComponent}
+          field={@form[:members]}
+          id="team-member-search"
+          label="Members"
+          show={true}
+          on_cancel={JS.hide(to: "#team-member-search")}
+          search_fun={:search_users_by_email}
+          context={Accounts}
+          results={[]}
+          selected={[]}
         />
         <:actions>
           <.button phx-disable-with="Saving...">Save Team</.button>
@@ -47,12 +62,13 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
     {:ok,
      socket
      |> assign(assigns)
-     |> assign(:team_lead_results, [])
      |> assign_form(changeset)}
   end
 
   @impl true
   def handle_event("validate", %{"team" => team_params}, socket) do
+    IO.puts("Validating team with #{inspect(team_params)}")
+
     changeset =
       socket.assigns.team
       |> Teams.change_team(team_params)
@@ -62,6 +78,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
   end
 
   def handle_event("save", %{"team" => team_params}, socket) do
+    IO.puts("Saving #{socket.assigns.action} team")
     save_team(socket, socket.assigns.action, team_params)
   end
 
@@ -91,12 +108,28 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
          |> push_patch(to: socket.assigns.patch)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
+        IO.puts("Error: #{inspect(changeset)}")
         {:noreply, assign_form(socket, changeset)}
     end
   end
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    assign(socket, :form, to_form(changeset))
+    form =
+      changeset
+      |> ensure_association_present(:leaders, %Accounts.User{})
+      |> ensure_association_present(:members, %Accounts.User{})
+      |> to_form
+
+    IO.puts("Form: #{inspect(form)}")
+    assign(socket, :form, form)
+  end
+
+  defp ensure_association_present(changeset, field, default_value) do
+    if get_field(changeset, field) == [] do
+      put_change(changeset, field, [default_value])
+    else
+      changeset
+    end
   end
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})

@@ -1,23 +1,42 @@
 defmodule ScrumMasterWeb.AutocompleteSearchComponent do
   use ScrumMasterWeb, :live_component
+  alias ScrumMaster.Accounts
 
-  attr :docs, :list, required: true
+  attr :label, :string, required: true
+  attr :field, :map, required: true
+  attr :results, :list, default: []
   @impl true
   def render(assigns) do
+    IO.puts("Query on rendering: #{inspect(assigns.query)}")
+
     ~H"""
     <div>
-      <.search_input value={@query} phx-target={@myself} phx-keyup="do-search" phx-debounce="200" />
-      <.search_results :if={@show} docs={@results} myself={@myself} />
+      <label for="search-input"><%= @label %></label>
+      <.inputs_for :let={item} field={@field}>
+        <.search_input
+          field={item[:email]}
+          value={@query[item.index]}
+          phx-target={@myself}
+          phx-keyup="do-search"
+          phx-debounce="200"
+        />
+        <.search_results :if={@show} docs={@results} myself={@myself} index={item.index} />
+      </.inputs_for>
+      <a href="#" phx-click="add-variant">Add more</a>
     </div>
     """
   end
+
+  attr :docs, :list, required: true
+  attr :myself, :map, required: true
+  attr :index, :integer, required: true
 
   def search_results(assigns) do
     ~H"""
     <div class="relative">
       <ul class="absolute z-10 w-full bg-white rounded shadow-lg">
         <%= for doc <- @docs do %>
-          <.result_item doc={doc} myself={@myself} />
+          <.result_item doc={doc} myself={@myself} index={@index} />
         <% end %>
       </ul>
     </div>
@@ -25,6 +44,8 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
   end
 
   attr :doc, :map, required: true
+  attr :index, :integer, required: true
+  attr :myself, :map, required: true
 
   def result_item(assigns) do
     ~H"""
@@ -36,6 +57,7 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
       phx-click="select-item"
       phx-target={@myself}
       phx-value-email={@doc.email}
+      phx-value-index={@index}
     >
       <%= @doc.email %>
     </li>
@@ -44,12 +66,14 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
 
   attr :rest, :global
   attr :value, :string, default: ""
+  attr :field, :map, required: true
 
   def search_input(assigns) do
     ~H"""
     <div class="relative ">
       <!-- Heroicon name: mini/magnifying-glass -->
-      <input
+      <.input
+        field={@field}
         {@rest}
         type="text"
         value={@value}
@@ -92,17 +116,21 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
     end
   end
 
-  def handle_event("select-item", %{"email" => email}, socket) do
+  def handle_event("select-item", %{"email" => email, "index" => index}, socket) do
     IO.puts("Selected item: #{email}")
-    {:noreply, assign(socket, query: email, results: [])}
+    user = Accounts.get_user_by_email(email)
+
+    query = Map.put(socket.assigns.query, String.to_integer(index), email)
+    IO.puts("Updating Query on event: #{inspect(query)}")
+
+    {:noreply, assign(socket, query: query, results: [], selected: [user])}
   end
 
   @impl true
   def update(assigns, socket) do
-    {:ok,
-     socket
-     |> assign(assigns)
-     |> assign(:documents, [])
-     |> assign(:search, "")}
+    current_query = Map.get(assigns, :query, %{0 => ""})
+    IO.puts("Current query: #{inspect(current_query)}")
+    updated_assigns = Map.put(assigns, :query, current_query)
+    {:ok, assign(socket, updated_assigns)}
   end
 end
