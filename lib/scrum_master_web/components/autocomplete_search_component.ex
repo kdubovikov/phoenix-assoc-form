@@ -5,7 +5,7 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
 
   attr :label, :string, required: true
   attr :field, :map, required: true
-  attr :results, :list, default: []
+  attr :results, :map, default: %{}
   attr :parent, :map, required: true
   @impl true
   def render(assigns) do
@@ -20,9 +20,15 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
           value={@query[item.index]}
           phx-target={@myself}
           phx-keyup="do-search"
+          phx-value-index={item.index}
           phx-debounce="200"
         />
-        <.search_results :if={@show} docs={@results} myself={@myself} index={item.index} />
+        <.search_results
+          :if={@show}
+          docs={Map.get(@results, item.index, [])}
+          myself={@myself}
+          index={item.index}
+        />
       </.inputs_for>
       <a href="#" phx-click={@id <> "-add"} phx-target={@parent}>Add more</a>
     </div>
@@ -97,7 +103,7 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
   @impl true
   def handle_event(
         "do-search",
-        %{"value" => value},
+        %{"value" => value, "index" => index},
         socket
       ) do
     if String.trim(value) != "" do
@@ -105,7 +111,8 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
       search_fun = socket.assigns.search_fun
       context = socket.assigns.context
 
-      results = apply(context, search_fun, [value])
+      new_results = apply(context, search_fun, [value])
+      results = Map.put(socket.assigns.results, String.to_integer(index), new_results)
 
       IO.inspect(results)
 
@@ -125,7 +132,7 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
     query = Map.put(socket.assigns.query, String.to_integer(index), email)
     IO.puts("Updating Query on event: #{inspect(query)}")
 
-    {:noreply, assign(socket, query: query, results: [], selected: [user])}
+    {:noreply, assign(socket, query: query, results: %{}, selected: [user])}
   end
 
   @impl true

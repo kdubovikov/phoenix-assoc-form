@@ -32,7 +32,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
           on_cancel={JS.hide(to: "#team-lead-search")}
           search_fun={:search_users_by_email}
           context={Accounts}
-          results={[]}
+          results={%{}}
           selected={[]}
           parent={@myself}
         />
@@ -46,7 +46,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
           on_cancel={JS.hide(to: "#team-member-search")}
           search_fun={:search_users_by_email}
           context={Accounts}
-          results={[]}
+          results={%{}}
           selected={[]}
           parent={@myself}
         />
