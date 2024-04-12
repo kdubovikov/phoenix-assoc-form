@@ -1,10 +1,12 @@
 defmodule ScrumMasterWeb.AutocompleteSearchComponent do
+  require Logger
   use ScrumMasterWeb, :live_component
   alias ScrumMaster.Accounts
 
   attr :label, :string, required: true
   attr :field, :map, required: true
   attr :results, :list, default: []
+  attr :parent, :map, required: true
   @impl true
   def render(assigns) do
     IO.puts("Query on rendering: #{inspect(assigns.query)}")
@@ -22,7 +24,7 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
         />
         <.search_results :if={@show} docs={@results} myself={@myself} index={item.index} />
       </.inputs_for>
-      <a href="#" phx-click="add-variant">Add more</a>
+      <a href="#" phx-click={@id <> "-add"} phx-target={@parent}>Add more</a>
     </div>
     """
   end

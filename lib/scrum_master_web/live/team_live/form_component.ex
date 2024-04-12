@@ -1,4 +1,5 @@
 defmodule ScrumMasterWeb.TeamLive.FormComponent do
+  require Logger
   use ScrumMasterWeb, :live_component
 
   alias ScrumMaster.Teams
@@ -33,6 +34,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
           context={Accounts}
           results={[]}
           selected={[]}
+          parent={@myself}
         />
 
         <.live_component
@@ -46,6 +48,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
           context={Accounts}
           results={[]}
           selected={[]}
+          parent={@myself}
         />
         <:actions>
           <.button phx-disable-with="Saving...">Save Team</.button>
@@ -67,7 +70,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
 
   @impl true
   def handle_event("validate", %{"team" => team_params}, socket) do
-    IO.puts("Validating team with #{inspect(team_params)}")
+    Logger.info("Validating team with #{inspect(team_params)}")
 
     changeset =
       socket.assigns.team
@@ -78,8 +81,35 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
   end
 
   def handle_event("save", %{"team" => team_params}, socket) do
-    IO.puts("Saving #{socket.assigns.action} team")
+    Logger.info("Saving #{socket.assigns.action} team")
     save_team(socket, socket.assigns.action, team_params)
+  end
+
+  def handle_event("team-lead-search-add", _, socket) do
+    Logger.debug("Adding leader to team")
+    Logger.debug(inspect(socket.assigns.form))
+    # add a new empty user to the leaders list
+    socket =
+      update(socket, :form, fn %{source: changeset} ->
+        existing = Ecto.Changeset.get_field(changeset, :leaders)
+        changeset = Ecto.Changeset.put_change(changeset, :leaders, [%{}] ++ existing)
+        to_form(changeset)
+      end)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("team-member-search-add", _, socket) do
+    Logger.debug("Adding member to team")
+
+    socket =
+      update(socket, :form, fn %{source: changeset} ->
+        existing = Ecto.Changeset.get_field(changeset, :members)
+        changeset = Ecto.Changeset.put_change(changeset, :members, [%{}] ++ existing)
+        to_form(changeset)
+      end)
+
+    {:noreply, socket}
   end
 
   defp save_team(socket, :edit, team_params) do
@@ -108,7 +138,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
          |> push_patch(to: socket.assigns.patch)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        IO.puts("Error: #{inspect(changeset)}")
+        Logger.debug("Error: #{inspect(changeset)}")
         {:noreply, assign_form(socket, changeset)}
     end
   end
@@ -120,7 +150,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
       |> ensure_association_present(:members, %Accounts.User{})
       |> to_form
 
-    IO.puts("Form: #{inspect(form)}")
+    Logger.debug("Form: #{inspect(form)}")
     assign(socket, :form, form)
   end
 
