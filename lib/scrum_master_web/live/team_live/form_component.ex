@@ -36,6 +36,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
           selected={[]}
           parent={@myself}
         />
+        <.error :for={msg <- @form[:leaders].errors}><%= elem(msg, 0) %></.error>
 
         <.live_component
           module={ScrumMasterWeb.AutocompleteSearchComponent}
@@ -50,6 +51,7 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
           selected={[]}
           parent={@myself}
         />
+        <.error :for={msg <- @form[:members].errors}><%= elem(msg, 0) %></.error>
         <:actions>
           <.button phx-disable-with="Saving...">Save Team</.button>
         </:actions>

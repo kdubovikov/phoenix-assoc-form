@@ -13,7 +13,7 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
 
     ~H"""
     <div>
-      <label for="search-input"><%= @label %></label>
+      <.label for="search-input"><%= @label %></.label>
       <.inputs_for :let={item} field={@field}>
         <.search_input
           field={item[:email]}
