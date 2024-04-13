@@ -102,6 +102,12 @@ defmodule ScrumMaster.Accounts.User do
     end
   end
 
+  def changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email])
+    |> validate_email(opts)
+  end
+
   @doc """
   A user changeset for changing the password.
 

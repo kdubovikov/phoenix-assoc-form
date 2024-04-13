@@ -35,6 +35,10 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
           results={%{}}
           selected={[]}
           parent={@myself}
+          changeset={@changeset}
+          field_name={:leaders}
+          parent_module={__MODULE__}
+          parent_id={@id}
         />
         <.error :for={msg <- @form[:leaders].errors}><%= elem(msg, 0) %></.error>
 
@@ -50,6 +54,10 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
           results={%{}}
           selected={[]}
           parent={@myself}
+          changeset={@changeset}
+          field_name={:members}
+          parent_module={__MODULE__}
+          parent_id={@id}
         />
         <.error :for={msg <- @form[:members].errors}><%= elem(msg, 0) %></.error>
         <:actions>
@@ -62,12 +70,37 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
 
   @impl true
   def update(%{team: team} = assigns, socket) do
+    Logger.debug("==== Updating team with #{inspect(team)}")
     changeset = Teams.change_team(team)
 
     {:ok,
      socket
      |> assign(assigns)
      |> assign_form(changeset)}
+  end
+
+  def update(%{id: :new, field_name: field_name, email: email, changeset: _changeset}, socket) do
+    Logger.debug("==== Updating #{field_name}")
+    # add the selected user to the members list
+    socket =
+      update(socket, :form, fn %{source: changeset} ->
+        # place the selected user as first in the list
+        user = Accounts.get_user_by_email(email)
+        Logger.debug("Adding user to #{field_name}: #{inspect(user)}")
+
+        [empty | rest] = Ecto.Changeset.get_assoc(changeset, field_name)
+        Logger.debug("Existing members: #{inspect(empty)} #{inspect(rest)}")
+
+        changeset =
+          Ecto.Changeset.put_assoc(changeset, field_name, [
+            Ecto.Changeset.put_change(empty, :id, user.id) | rest
+          ])
+
+        Logger.debug("New members: #{inspect(Ecto.Changeset.get_change(changeset, field_name))}")
+        to_form(changeset)
+      end)
+
+    {:ok, socket}
   end
 
   @impl true
@@ -89,14 +122,19 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
 
   def handle_event("team-lead-search-add", _, socket) do
     Logger.debug("Adding leader to team")
-    Logger.debug(inspect(socket.assigns.form))
-    # add a new empty user to the leaders list
+
     socket =
       update(socket, :form, fn %{source: changeset} ->
-        existing = Ecto.Changeset.get_field(changeset, :leaders)
-        changeset = Ecto.Changeset.put_change(changeset, :leaders, [%{}] ++ existing)
+        # add a new empty user to the leaders list
+        existing = Ecto.Changeset.get_change(changeset, :leaders)
+        Logger.debug("Existing leaders: #{inspect(existing)}")
+        changeset = Ecto.Changeset.put_change(changeset, :leaders, [%{} | existing])
+        Logger.debug("New leaders: #{inspect(Ecto.Changeset.get_change(changeset, :leaders))}")
         to_form(changeset)
       end)
+
+    changeset = socket.assigns.form.source
+    socket = assign(socket, :changeset, changeset)
 
     {:noreply, socket}
   end
@@ -106,8 +144,8 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
 
     socket =
       update(socket, :form, fn %{source: changeset} ->
-        existing = Ecto.Changeset.get_field(changeset, :members)
-        changeset = Ecto.Changeset.put_change(changeset, :members, [%{}] ++ existing)
+        existing = Ecto.Changeset.get_change(changeset, :members)
+        changeset = Ecto.Changeset.put_change(changeset, :members, [%{} | existing])
         to_form(changeset)
       end)
 
@@ -153,7 +191,10 @@ defmodule ScrumMasterWeb.TeamLive.FormComponent do
       |> to_form
 
     Logger.debug("Form: #{inspect(form)}")
-    assign(socket, :form, form)
+
+    socket
+    |> assign(:form, form)
+    |> assign(:changeset, changeset)
   end
 
   defp ensure_association_present(changeset, field, default_value) do

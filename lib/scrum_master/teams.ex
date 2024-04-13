@@ -18,7 +18,7 @@ defmodule ScrumMaster.Teams do
 
   """
   def list_teams do
-    Repo.all(Team)
+    Repo.all(Team) |> Repo.preload([:leaders, :members])
   end
 
   @doc """
@@ -35,7 +35,7 @@ defmodule ScrumMaster.Teams do
       ** (Ecto.NoResultsError)
 
   """
-  def get_team!(id), do: Repo.get!(Team, id)
+  def get_team!(id), do: Repo.get!(Team, id) |> Repo.preload([:leaders, :members])
 
   @doc """
   Creates a team.

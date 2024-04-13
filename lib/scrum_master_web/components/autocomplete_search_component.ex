@@ -7,6 +7,11 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
   attr :field, :map, required: true
   attr :results, :map, default: %{}
   attr :parent, :map, required: true
+  attr :changeset, :map, required: true
+  attr :fiend_name, :atom, required: true
+  attr :parent_module, :any, required: true
+  attr :parent_id, :string, required: true
+
   @impl true
   def render(assigns) do
     IO.puts("Query on rendering: #{inspect(assigns.query)}")
@@ -126,11 +131,31 @@ defmodule ScrumMasterWeb.AutocompleteSearchComponent do
   end
 
   def handle_event("select-item", %{"email" => email, "index" => index}, socket) do
+    %{
+      query: query,
+      changeset: changeset,
+      parent_module: parent_module,
+      field_name: field_name,
+      parent_id: parent_id
+    } =
+      socket.assigns
+
     IO.puts("Selected item: #{email}")
     user = Accounts.get_user_by_email(email)
 
-    query = Map.put(socket.assigns.query, String.to_integer(index), email)
+    query = Map.put(query, String.to_integer(index), email)
     IO.puts("Updating Query on event: #{inspect(query)}")
+
+    Logger.debug(
+      "Sending update to parent module #{parent_module} with id #{parent_id} for field #{field_name}"
+    )
+
+    send_update(parent_module,
+      id: parent_id,
+      field_name: field_name,
+      email: email,
+      changeset: changeset
+    )
 
     {:noreply, assign(socket, query: query, results: %{}, selected: [user])}
   end

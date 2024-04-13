@@ -14,36 +14,27 @@ defmodule ScrumMaster.Teams.Team do
 
   @doc false
   def changeset(team, attrs) do
-    leaders = Map.get(attrs, :leaders, [])
-    members = Map.get(attrs, :members, [])
-
     team
     |> cast(attrs, [:name])
+    # |> cast_assoc(:leaders)
+    # |> cast_assoc(:members)
     |> validate_required([:name])
-    |> handle_leader_changeset(leaders)
-    |> put_assoc(:leaders, leaders)
-    |> handle_member_changeset(members)
-    |> put_assoc(:members, members)
+    |> handle_leader_changeset()
+    |> handle_member_changeset()
   end
 
-  def handle_member_changeset(changeset, member_ids) do
-    members = Accounts.get_users_by_ids(member_ids)
-
+  def handle_member_changeset(changeset) do
     changeset
     |> validate_at_least_one(:members, "Team must have at least one member")
     |> validate_non_empty_email(:members, "Members must have a non-empty email")
     |> validate_unique_email(:members, "Members must have unique emails")
-    |> put_assoc(:members, members)
   end
 
-  def handle_leader_changeset(changeset, leader_ids) do
-    leaders = Accounts.get_users_by_ids(leader_ids)
-
+  def handle_leader_changeset(changeset) do
     changeset
     |> validate_at_least_one(:leaders, "Team must have at least one leader")
     |> validate_non_empty_email(:leaders, "Leaders must have a non-empty email")
     |> validate_unique_email(:leaders, "Leaders must have unique emails")
-    |> put_assoc(:leaders, leaders)
   end
 
   defp validate_at_least_one(changeset, field, error_message) do
@@ -69,7 +60,7 @@ defmodule ScrumMaster.Teams.Team do
     Logger.debug("Validating unique email")
     field = get_field(changeset, field)
 
-    if field |> Enum.uniq_by(& &1.email) |> Enum.count() == field do
+    if field |> Enum.uniq_by(& &1.email) |> Enum.count() == Enum.count(field) do
       Logger.debug("All emails are unique", field)
       changeset
     else
